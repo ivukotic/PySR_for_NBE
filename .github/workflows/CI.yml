@@ -4,20 +4,6 @@ on:
   push:
     branches:
       - '*'
-    paths:
-      - 'test/**'
-      - 'pysr/**'
-      - '.github/workflows/CI.yml'
-      - 'setup.py'
-  pull_request:
-    branches:
-      - '*'
-    paths:
-      - 'test/**'
-      - 'pysr/**'
-      - '.github/workflows/CI.yml'
-      - 'setup.py'
-
 jobs:
   test:
     runs-on: ${{ matrix.os }}
