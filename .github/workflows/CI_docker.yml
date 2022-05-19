@@ -4,21 +4,6 @@ on:
   push:
     branches:
       - '*'
-    paths:
-      - 'test/**'
-      - 'pysr/**'
-      - '.github/workflows/CI_docker.yml'
-      - 'setup.py'
-      - 'Dockerfile'
-  pull_request:
-    branches:
-      - '*'
-    paths:
-      - 'test/**'
-      - 'pysr/**'
-      - '.github/workflows/CI_docker.yml'
-      - 'setup.py'
-      - 'Dockerfile'
 
 jobs:
   test:
