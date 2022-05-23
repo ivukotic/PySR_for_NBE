@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - "*"
-    paths:
-      - "test/**"
-      - "pysr/**"
-      - ".github/workflows/CI.yml"
-      - "setup.py"
-
 jobs:
   docker:
     runs-on: ubuntu-latest
