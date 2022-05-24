@@ -1,9 +1,9 @@
-name: Docker
+name: DockerTest
 
 on:
   push:
     branches:
-      - '*'
+      - "*"
 
 jobs:
   test:
@@ -13,10 +13,10 @@ jobs:
         shell: bash
     strategy:
       matrix:
-        julia-version: ['1.7.1']
-        python-version: ['3.9.10']
+        julia-version: ["1.7.1"]
+        python-version: ["3.9.10"]
         os: [ubuntu-latest]
-        arch: ['linux/x86_64']
+        arch: ["linux/x86_64"]
 
     steps:
       - uses: actions/checkout@v1.0.0
