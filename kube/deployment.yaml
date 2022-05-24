@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: nbe
-  namespace: nbe
+  # namespace: nbe
   labels:
     k8s-app: nbe
 spec:
@@ -19,7 +19,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: nbe
-  namespace: nbe
+  # namespace: nbe
   labels:
     k8s-app: nbe
   annotations:
@@ -46,7 +46,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nbe
-  namespace: nbe
+  # namespace: nbe
   labels:
     k8s-app: nbe
 spec:
@@ -62,27 +62,13 @@ spec:
       containers:
         - name: nbe
           image: ivukotic/nbe:latest
+          command: ["python", "/findit.py"]
           ports:
             - containerPort: 80
-          livenessProbe:
-            httpGet:
-              scheme: HTTP
-              path: /healthz
-              port: 80
-            periodSeconds: 60
-            initialDelaySeconds: 60
-            timeoutSeconds: 10
-          volumeMounts:
-            - name: settings-volume
-              mountPath: "/etc/nbe/"
-              readOnly: true
-      volumes:
-        - name: settings-volume
-          projected:
-            sources:
-              - secret:
-                  name: globus-secret
-              - secret:
-                  name: config
-              # - secret:
-              #     name: mg-config
+          resources:
+            requests:
+              cpu: "4"
+              memory: "4Gi"
+            limits:
+              cpu: "48"
+              memory: "16Gi"

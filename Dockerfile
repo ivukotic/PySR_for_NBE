@@ -48,4 +48,6 @@ RUN python3 -c 'import pysr; pysr.install()'
 # Add tests
 ADD ./test/ /pysr/test/
 
+WORKDIR /NBE
+
 CMD ["bash"]
