@@ -38,8 +38,10 @@ RUN pip3 install -r /pysr/requirements.txt
 # We do a minimal copy so it doesn't need to rerun at every file change:
 ADD ./setup.py /pysr/setup.py
 ADD ./pysr/ /pysr/pysr/
-ADD ./findit.py /
-ADD ./mass.mas03 /
+
+RUN mkdir /NBE
+COPY /NBE/findit.py /NBE/mass.mas03 /NBE/
+
 RUN pip3 install .
 
 # Install Julia pre-requisites:
