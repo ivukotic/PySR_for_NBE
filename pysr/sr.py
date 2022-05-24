@@ -357,6 +357,9 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
         unary_operators=None,
         procs=cpu_count(),
         loss="L2DistLoss()",
+        complexity_of_operators=None,
+        complexity_of_constants=None,
+        complexity_of_variables=None,
         populations=15,
         niterations=40,
         ncyclesperiteration=550,
@@ -444,6 +447,17 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
         :type populations: int
         :param loss: String of Julia code specifying the loss function.  Can either be a loss from LossFunctions.jl, or your own loss written as a function. Examples of custom written losses include: `myloss(x, y) = abs(x-y)` for non-weighted, or `myloss(x, y, w) = w*abs(x-y)` for weighted.  Among the included losses, these are as follows. Regression: `LPDistLoss{P}()`, `L1DistLoss()`, `L2DistLoss()` (mean square), `LogitDistLoss()`, `HuberLoss(d)`, `L1EpsilonInsLoss(ϵ)`, `L2EpsilonInsLoss(ϵ)`, `PeriodicLoss(c)`, `QuantileLoss(τ)`.  Classification: `ZeroOneLoss()`, `PerceptronLoss()`, `L1HingeLoss()`, `SmoothedL1HingeLoss(γ)`, `ModifiedHuberLoss()`, `L2MarginLoss()`, `ExpLoss()`, `SigmoidLoss()`, `DWDMarginLoss(q)`.
         :type loss: str
+        :param complexity_of_operators: If you would like to use a complexity other than 1 for
+        an operator, specify the complexity here. For example, `{"sin": 2, "+": 1}` would give
+        a complexity of 2 for each use of the `sin` operator, and a complexity of 1
+        for each use of the `+` operator (which is the default). You may specify
+        real numbers for a complexity, and the total complexity of a tree will be rounded
+        to the nearest integer after computing.
+        :type complexity_of_operators: dict
+        :param complexity_of_constants: Complexity of constants. Default is 1.
+        :type complexity_of_constants: int/float
+        :param complexity_of_variables: Complexity of variables. Default is 1.
+        :type complexity_of_variables: int/float
         :param denoise: Whether to use a Gaussian Process to denoise the data before inputting to PySR. Can help PySR fit noisy data.
         :type denoise: bool
         :param select_k_features: whether to run feature selection in Python using random forests, before passing to the symbolic regression code. None means no feature selection; an int means select that many features.
@@ -677,7 +691,7 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
 
         if maxsize > 40:
             warnings.warn(
-                "Note: Using a large maxsize for the equation search will be exponentially slower and use significant memory. You should consider turning `use_frequency` to False, and perhaps use `warmup_maxsize_by`."
+                "Note: Using a large maxsize for the equation search will be exponentially slower and use significant memory."
             )
         elif maxsize < 7:
             raise NotImplementedError("PySR requires a maxsize of at least 7")
@@ -697,6 +711,9 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
                 unary_operators=unary_operators,
                 procs=procs,
                 loss=loss,
+                complexity_of_operators=complexity_of_operators,
+                complexity_of_constants=complexity_of_constants,
+                complexity_of_variables=complexity_of_variables,
                 populations=populations,
                 niterations=niterations,
                 ncyclesperiteration=ncyclesperiteration,
@@ -1130,6 +1147,20 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
                 "Note: you are running with more than 10,000 datapoints. You should consider turning on batching (https://astroautomata.com/PySR/#/options?id=batching). You should also reconsider if you need that many datapoints. Unless you have a large amount of noise (in which case you should smooth your dataset first), generally < 10,000 datapoints is enough to find a functional form with symbolic regression. More datapoints will lower the search speed."
             )
 
+        if self.n_features >= 10 and not select_k_features:
+            warnings.warn(
+                "Note: you are running with 10 features or more. "
+                "Genetic algorithms like used in PySR scale poorly with large numbers of features. "
+                "Consider using feature selection techniques to select the most important features "
+                "(you can do this automatically with the `select_k_features` parameter), "
+                "or, alternatively, doing a dimensionality reduction beforehand. "
+                "For example, `X = PCA(n_components=6).fit_transform(X)`, "
+                "using scikit-learn's `PCA` class, "
+                "will reduce the number of features to 6 in an interpretable way, "
+                "as each resultant feature "
+                "will be a linear combination of the original features. "
+            )
+
         X, selection = _handle_feature_selection(
             X, select_k_features, y, variable_names
         )
@@ -1227,8 +1258,8 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
             Main.div = Main.eval("(/)")
 
         nested_constraints = self.params["nested_constraints"]
+        # Parse dict into Julia Dict for nested constraints::
         if nested_constraints is not None:
-            # Parse dict into Julia Dict:
             nested_constraints_str = "Dict("
             for outer_k, outer_v in nested_constraints.items():
                 nested_constraints_str += f"({outer_k}) => Dict("
@@ -1237,6 +1268,15 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
                 nested_constraints_str += "), "
             nested_constraints_str += ")"
             nested_constraints = Main.eval(nested_constraints_str)
+
+        # Parse dict into Julia Dict for complexities:
+        complexity_of_operators = self.params["complexity_of_operators"]
+        if complexity_of_operators is not None:
+            complexity_of_operators_str = "Dict("
+            for k, v in complexity_of_operators.items():
+                complexity_of_operators_str += f"({k}) => {v}, "
+            complexity_of_operators_str += ")"
+            complexity_of_operators = Main.eval(complexity_of_operators_str)
 
         Main.custom_loss = Main.eval(loss)
 
@@ -1283,11 +1323,16 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
 
         self.params_hash = cur_hash
 
+        # Call to Julia backend.
+        # See https://github.com/search?q=%22function+Options%22+repo%3AMilesCranmer%2FSymbolicRegression.jl+path%3A%2Fsrc%2F+filename%3AOptions.jl+language%3AJulia&type=Code
         options = Main.Options(
             binary_operators=Main.eval(str(tuple(binary_operators)).replace("'", "")),
             unary_operators=Main.eval(str(tuple(unary_operators)).replace("'", "")),
             bin_constraints=bin_constraints,
             una_constraints=una_constraints,
+            complexity_of_operators=complexity_of_operators,
+            complexity_of_constants=self.params["complexity_of_constants"],
+            complexity_of_variables=self.params["complexity_of_variables"],
             nested_constraints=nested_constraints,
             loss=Main.custom_loss,
             maxsize=int(maxsize),
@@ -1351,6 +1396,8 @@ class PySRRegressor(BaseEstimator, RegressorMixin):
 
         cprocs = 0 if multithreading else procs
 
+        # Call to Julia backend.
+        # See https://github.com/search?q=%22function+EquationSearch%22+repo%3AMilesCranmer%2FSymbolicRegression.jl+path%3A%2Fsrc%2F+filename%3ASymbolicRegression.jl+language%3AJulia&type=Code
         self.raw_julia_state = Main.EquationSearch(
             Main.X,
             Main.y,
