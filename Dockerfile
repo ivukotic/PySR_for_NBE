@@ -28,7 +28,7 @@ RUN PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install ${PYVERSION}
 ENV PATH="/root/.pyenv/versions/$PYVERSION/bin:$PATH"
 
 # Install IPython and other useful libraries:
-RUN pip install ipython jupyter matplotlib
+RUN pip install ipython jupyterlab matplotlib
 
 # Caches install (https://stackoverflow.com/questions/25305788/how-to-avoid-reinstalling-packages-when-building-docker-image-for-python-project)
 ADD ./requirements.txt /pysr/requirements.txt
