@@ -63,16 +63,17 @@ spec:
       containers:
         - name: nbe
           image: ivukotic/nbe:latest
-          command: ["jupyter"]
-          args:
-            [
-              "lab",
-              "--LabApp.token='password'",
-              "--LabApp.ip='0.0.0.0'",
-              "--LabApp.allow_root=True",
-            ]
+          # command: ["jupyter"]
+          # args:
+          #   [
+          #     "lab",
+          #     "--LabApp.token='password'",
+          #     "--LabApp.ip='0.0.0.0'",
+          #     "--LabApp.allow_root=True",
+          #   ]
           # command: ["sleep"]
           # args: ["36000"]
+          command: ["runJupyter.sh"]
           ports:
             - containerPort: 8888
           resources:
