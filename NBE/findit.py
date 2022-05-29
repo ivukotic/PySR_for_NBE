@@ -1,5 +1,6 @@
 # https://github.com/MilesCranmer/PySR
 
+from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -23,13 +24,16 @@ X = df[['N', 'Z']]
 y = df[['avEbind']]
 
 model = PySRRegressor(
+    update=False,
+    multithreading=True,
     niterations=40,
-    binary_operators=["+", "*"],
+    binary_operators=["+", "-", "*", "/", "^"],
     unary_operators=[
         "cos",
         "exp",
         "sin",
         "inv(x) = 1/x",  # Custom operator (julia syntax)
+        "odd(x) = isodd(x) ? 1.0f0 : -1.0f0"
     ],
     model_selection="best",
     loss="loss(x, y) = (x - y)^2",  # Custom loss function (julia syntax)
@@ -37,3 +41,8 @@ model = PySRRegressor(
 
 model.fit(X, y)
 print(model)
+
+plt.scatter(y[:, 0], model(X)[:, 0])
+plt.xlabel('Truth')
+plt.ylabel('Prediction')
+plt.show()
