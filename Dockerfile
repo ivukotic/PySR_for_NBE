@@ -41,7 +41,7 @@ ADD ./pysr/ /pysr/pysr/
 
 RUN mkdir /NBE
 COPY /NBE/findit.py /NBE/mass.mas03 /NBE/
-
+COPY runJupyter.sh /
 RUN pip3 install .
 
 # Install Julia pre-requisites:

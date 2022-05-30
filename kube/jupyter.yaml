@@ -73,7 +73,7 @@ spec:
           #   ]
           # command: ["sleep"]
           # args: ["36000"]
-          command: ["runJupyter.sh"]
+          command: ["/runJupyter.sh"]
           ports:
             - containerPort: 8888
           resources:
