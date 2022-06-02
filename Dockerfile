@@ -51,5 +51,6 @@ RUN python3 -c 'import pysr; pysr.install()'
 ADD ./test/ /pysr/test/
 
 WORKDIR /NBE
+ENV JULIA_PKG_OFFLINE true
 
 CMD ["bash"]
