@@ -23,21 +23,25 @@ y = df[['avEbind']]
 
 model = PySRRegressor(
     update=False,
+    verbosity=0,
     multithreading=True,
-    niterations=50,  # default is 40
+    niterations=400,  # default is 40
     populations=50,  # default is 15
-    binary_operators=["plus", "mult", "pow"],
+    population_size=33,
+    maxsize=50,
+    maxdepth=25,
+    parsimony=0.0032,
+    use_frequency=False,
+    binary_operators=["plus", "mult", "pow"],  # sub, div, mod
     unary_operators=[
-        "cos",
-        "exp",
-        "sin",
-        "log",
+        # "cos", "exp", "sin", "log", neg, square, cube, abs, sign, round, floor, ...
         "odd(x) = isodd(x) ? 1.0f0 : -1.0f0"
     ],
-    extra_sympy_mappings={'special': lambda x, y: x**2 + y},
+    should_optimize_constants=True
+    # extra_sympy_mappings={'special': lambda x, y: x**2 + y},
     # model_selection="best", best is default "accuracy"
     # loss="f(x, y) = (x - y)^2",  # this is default,
-    constraints={'pow': (-1, 3), 'mult': (3, 3), 'cos': 5, 'sin': 5}
+    # constraints={'pow': (-1, 3), 'mult': (3, 3), 'cos': 5, 'sin': 5}
 )
 
 model.fit(X, y)
@@ -60,7 +64,6 @@ tp = pdf.set_index(['Z', 'n']).res.unstack(0)
 fig, ax = plt.subplots(figsize=(7, 5), dpi=150)
 z_min = pdf.res.min()
 z_max = pdf.res.max()
-print(z_min, z_max)
 
 # c = ax.pcolormesh(tp, cmap= cm.coolwarm, norm=colors.LogNorm(vmin=z_min, vmax=z_max))
 c = ax.pcolormesh(tp, norm=colors.SymLogNorm(linthresh=0.1, linscale=0.1, vmin=z_min, vmax=z_max, base=10),
